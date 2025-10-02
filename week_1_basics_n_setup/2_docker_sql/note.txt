@@ -27,7 +27,7 @@ docker run -it \
   -p 8080:80 \
   dpage/pgadmin4
 
-## Network; connect postgres-pgadmin in same network
+## 1.2.3 Network; connect postgres-pgadmin in same network
 
 docker network create pg-network
 
@@ -48,3 +48,30 @@ docker run -it \
   --network=pg-network \
   --name pgadmin \
   dpage/pgadmin4
+
+
+##1.2.4 Ingestion Script
+URL="https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz"
+
+python ingest_data.py \
+  --user=root \
+  --password=root \
+  --host=localhost \
+  --port=5433 \
+  --db=ny_taxi \
+  --table_name=yellow_taxi_trips \
+  --url=${URL}
+
+docker build -t taxi_ingest:v001 .
+
+URL="https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz"
+docker run -it \
+  --network=pg-network \
+  taxi_ingest:v001 \
+    --user=root \
+    --password=root \
+    --host=pg-database \
+    --port=5432 \
+    --db=ny_taxi \
+    --table_name=test_ingestion \
+    --url=${URL}
